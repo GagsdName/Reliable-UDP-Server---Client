@@ -1,10 +1,11 @@
 # Reliable-UDP-Server---Client
-
+ 
 
 Reliable UDP
 
                                              Header Design
-As specified in the problem statement , following are the assumptions specified for header design for the reliable udp which is again assumed to be a simplified version of the tcp header:
+                                             
+As specified in the problem statement(checked in master) , following are the assumptions specified for header design for the reliable udp which is again assumed to be a simplified version of the tcp header:
 
  1) Packet size should be less than 1500 bytes.
 
