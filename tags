@@ -1,0 +1,24 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	0	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+main	src/udp_server.c	/^int main(int argc, char *argv[])$/;"	f
+main	src/udp_client.c	/^int main( int argc, char *argv[] )$/;"	f
+MYPORT	include/header.h	11;"	d
+BCKLOG	include/header.h	12;"	d
+SERVER_IP	include/header.h	13;"	d
+BUFSIZE	include/header.h	14;"	d
+VERSION	include/header.h	15;"	d
+FORBIDDEN	include/header.h	16;"	d
+snode	include/header.h	/^typedef struct snode$/;"	s
+data	include/header.h	/^        char data[64];$/;"	m	struct:snode
+next	include/header.h	/^        struct snode *next;$/;"	m	struct:snode	typeref:struct:snode::snode
+snode	include/header.h	/^}snode;$/;"	t	typeref:struct:snode
+BIN	make/makefile	/^BIN = ..\/bin\/$/;"	m
+OBJ	make/makefile	/^OBJ = ..\/obj\/$/;"	m
+SRC	make/makefile	/^SRC = ..\/src\/$/;"	m
+INCLUDE	make/makefile	/^INCLUDE = -I..\/include$/;"	m
+CC	make/makefile	/^CC = gcc$/;"	m
+CFLAGS	make/makefile	/^CFLAGS = -c -Wall -g$/;"	m

@@ -1,0 +1,179 @@
+#include"header.h"
+int main( int argc, char *argv[] )
+{
+	int     sd,i, readbytes;
+	//int32_t counter = 0;
+	struct  sockaddr_in serveraddress;
+	//char *buf = malloc(1500 *(sizeof(U8)));
+	//char buf[BUFSIZE];
+	unsigned char buf[2048] = {0};        
+	tlv_stream chain1;
+	U16 temp_u16;U32 temp_u32;
+	// Number of bytes serialized
+	int32_t size = 0;void * temp ;
+	reliable_udp_packet_t  *udp_packet = NULL ;
+	//memset(udp_header,0,sizeof(reliable_udp_header_t));
+
+	memset(&chain1, 0, sizeof(chain1));	
+	udp_packet = (reliable_udp_packet_t *) malloc( sizeof(reliable_udp_packet_t) ); 
+
+	sd = socket( PF_INET, SOCK_DGRAM, 0 );
+	if( sd < 0 ) {
+		perror( "socket" );
+		exit( 1 );
+	}
+
+	if (argv[1] == NULL ) {
+		printf ("PL specfiy the IP address of the server. \n");
+		exit(0);
+	}
+
+	if (argv[2] == NULL ) {
+		printf ("PL specfiy the port number for the server. \n");
+		exit(0);
+	}
+
+	if (argv[3] == NULL ) {
+		printf ("PL specfiy the filename \n");
+		exit(0);
+	}
+
+	memset(&serveraddress,0,sizeof(struct sockaddr_in));
+	serveraddress.sin_family = AF_INET;
+	serveraddress.sin_port = htons(atoi(argv[2]));
+	serveraddress.sin_addr.s_addr = inet_addr(argv[1]);
+
+	udp_packet->source_port = 3000;
+	temp_u16 = udp_packet->source_port;
+	temp = &temp_u16; 
+	add_to_stream(&chain1, 1, sizeof(U16), temp);
+
+	udp_packet->dest_port = htons(atoi(argv[2]));
+	temp_u16 = udp_packet->dest_port;
+	temp = &temp_u16; 
+	add_to_stream(&chain1, 2, sizeof(U16), temp);
+
+	udp_packet->seq_num = 0;
+	temp_u32 = udp_packet->seq_num;
+	temp = &temp_u32; 
+	add_to_stream(&chain1, 3, sizeof(U32), temp);
+
+	udp_packet->ack_num = 0;
+	temp_u32 = udp_packet->ack_num;
+	temp = &temp_u32; 
+	add_to_stream(&chain1, 4, sizeof(U32), temp);
+
+	udp_packet->length = 0;
+	temp_u16 = udp_packet->length;
+	temp = &temp_u16; 
+	add_to_stream(&chain1, 5, sizeof(U16), temp);
+
+	udp_packet->chksum = 0;
+	temp_u16 = udp_packet->chksum;
+	temp = &temp_u16; 
+	add_to_stream(&chain1, 6, sizeof(U16), temp);
+
+	memcpy (udp_packet->data, argv[3], strlen(argv[3]));
+	//	temp_u32 = udp_packet->data;
+	temp = udp_packet->data; 
+	add_to_stream(&chain1, 7, strlen(argv[3]), temp);
+
+	/*Serialization of stream*/
+	for(i = 0; i < chain1.used; i++)
+	{
+		buf[size] = chain1.object[i].type;
+		size++;
+
+		memcpy(&buf[size], &chain1.object[i].size, 2);
+		size += 2;
+
+		memcpy(&buf[size], chain1.object[i].data, chain1.object[i].size);
+		size += chain1.object[i].size;
+	}
+
+
+
+	sendto(sd,buf,size,0,(struct sockaddr *)&serveraddress,sizeof(serveraddress));
+
+
+
+	while (1)
+	{ 
+
+		readbytes = recvfrom(sd,buf,1000,0,NULL,NULL);
+		printf ("readbytes = %d", readbytes);
+                memset(&chain1, 0, sizeof(chain1));	
+		deserialize_tlv(readbuf, &chain1, readbytes);
+		printf ("chain2->used: %d\n", chain2->used);
+
+		memset(&buf[0],0,sizeof(1500));
+
+	}
+
+
+	close(sd);
+	return 0;
+}
+int32_t add_to_stream(tlv_stream *a, unsigned char type, int16_t size, unsigned char *bytes)
+{
+	if(a == NULL || bytes == NULL)
+		return -1;
+
+	// all elements used in chain?
+	if(a->used == 50)
+		return -1;
+
+	int index = a->used;
+	a->object[index].type = type;
+	a->object[index].size = size;
+	a->object[index].data = malloc(size);
+	memcpy(a->object[index].data, bytes, size);
+
+	// increase number of tlv objects used in this chain
+	a->used++;
+
+	// success
+	return 0;
+}
+
+int32_t deserialize_tlv(unsigned char *readbuf, tlv_stream *chain2, int32_t readbytes)
+{
+	int32_t counter = 0;
+
+	if(chain2 == NULL || readbuf == NULL)
+		return -1;
+
+	// check if the chain is empty
+	if(chain2->used != 0)
+		return -1;
+
+
+	while(counter < readbytes)
+	{
+		if(chain2->used == 50)
+		{printf("50");}
+
+		// deserialize type
+		chain2->object[chain2->used].type = readbuf[counter];
+		counter++;
+
+		// deserialize size
+		memcpy(&chain2->object[chain2->used].size, &readbuf[counter], 2);
+		counter+=2;
+
+		// deserialize data itself, only if data is not NULL
+		if(chain2->object[chain2->used].size > 0)
+		{
+			chain2->object[chain2->used].data = malloc(chain2->object[chain2->used].size);
+			memcpy(chain2->object[chain2->used].data, &readbuf[counter], chain2->object[chain2->used].size);
+			counter += chain2->object[chain2->used].size;
+		}else
+		{
+			chain2->object[chain2->used].data = NULL;
+		}
+
+		// increase number of tlv objects reconstructed
+		chain2->used++;
+	}
+	printf ("counter = %d\n", counter);
+	
